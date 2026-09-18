@@ -7,8 +7,10 @@ import (
 	mixer "github.com/krish-bedi/simd-audio-kernel"
 )
 
-// Float32 can accurately represent 7 digits
+// Float32 can accurately represent 6 significant digits
 // tolerance: 1e-6 for samples in range of [-1 to 1]
+
+// Returns true if a-b is within tolerance
 func withinTolerance(a, b float32) bool {
 	const tolerance = 1e-6
 	return math.Abs(float64(a-b)) <= tolerance
@@ -41,4 +43,23 @@ func TestMixScalarUsesShortestSlice(t *testing.T) {
 			t.Fatalf("sample %d, got %v, want %v", i, mix[i], want[i])
 		}
 	}
+}
+// go test -fuzz=FuzzMixScalar -fuzztime=30s
+func FuzzMixScalar(f *testing.F) {
+	// seed input
+	f.Add(float32(0.25), float32(-0.5), float32(0.8), float32(0.6))
+
+	f.Fuzz(func(t *testing.T, a, b, gainA, gainB float32) {
+		// NaN is a valid float32 value
+		if math.IsNaN(float64(a)) || math.IsNaN(float64(b)) || 
+			math.IsNaN(float64(gainA)) || math.IsNaN(float64(gainB)) {
+			t.Skip()
+		}
+
+		dst := []float32{0}
+		mixer.MixScalar(dst, []float32{a}, []float32{b}, gainA, gainB)
+		if dst[0] < -1 || dst[0] > 1 {
+			t.Fatalf("out of range: %v", dst[0])
+		}
+	})
 }

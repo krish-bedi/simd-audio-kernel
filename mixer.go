@@ -9,14 +9,14 @@ package mixer
 // - Returns values between -1 and 1
 
 func MixScalar(dst, a, b []float32, gainA, gainB float32) {
-	samples := findSampleCount(dst, a, b)
-	for i := range samples {
+	sampleCount := findSmallestSlice(dst, a, b)
+	for i := range sampleCount {
 		// Clamp(A * gainA + B * gainB) from -1 to 1
 		dst[i] = clamp(a[i] * gainA + b[i] * gainB)
 	}
 }
 
-func findSampleCount(dst, a, b []float32) int {
+func findSmallestSlice(dst, a, b []float32) int {
 	n := len(dst)
 	if len(a) < n {
 		n = len(a)
@@ -27,12 +27,12 @@ func findSampleCount(dst, a, b []float32) int {
 	return n
 }
 
-func clamp(mix float32) float32 {
-	if mix > 1 {
+func clamp(n float32) float32 {
+	if n > 1 {
 		return 1
 	}
-	if mix < -1 {
+	if n < -1 {
 		return -1
 	}
-	return mix
+	return n
 }
