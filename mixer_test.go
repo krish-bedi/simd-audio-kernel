@@ -63,3 +63,51 @@ func FuzzMixScalar(f *testing.F) {
 		}
 	})
 }
+
+type Mixer func(dst, a, b []float32, gainA, gainB float32)
+
+// prevents compiler optimization from affecting benchmark timing
+var benchmarkSink float32
+
+// Benchmark
+// go test -run='^$' -bench='MixScalar' -benchmem -count=5
+func benchmarkMixScalar(b *testing.B, n int, mix Mixer) {
+	trackA := make([]float32, n)
+	trackB := make([]float32, n)
+	dst := make([]float32, n)
+
+	// deterministic repeating patterns let us reproduce the benchmark
+	// math/rand with a fixed seed would work as well
+	for i := range trackA {
+		// populate both tracks with values from -1 to 1
+		trackA[i] = float32(i%101) / 50 - 1
+		trackB[i] = float32(i%21) / 10 - 1
+	}
+
+	// report throughput: 2 reads (trackA, trackB) + 1 write (dst)
+	// each float32 (4 bytes)
+	b.SetBytes(int64(n * 3 * 4))
+
+	// Only measure time taken by the mixer
+	b.ResetTimer()
+
+	// timed loop
+	for i := 0; i < b.N; i++ {
+		mix(dst, trackA, trackB, 0.7, 0.3)
+	}
+	// save value from dst so compiler does not try to..
+	// .. skip over it, if it sees dst is not used anywhere
+	benchmarkSink = dst[n-1]
+}
+
+func BenchmarkMixScalar32(b *testing.B) {
+	benchmarkMixScalar(b, 32, mixer.MixScalar)
+}
+
+func BenchmarkMixScalar1K(b *testing.B) {
+	benchmarkMixScalar(b, 1<<10, mixer.MixScalar)
+}
+
+func BenchmarkMixScalar1M(b *testing.B) {
+	benchmarkMixScalar(b, 1<<20, mixer.MixScalar)
+}
