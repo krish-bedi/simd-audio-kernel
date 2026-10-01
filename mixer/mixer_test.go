@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	mixer "github.com/krish-bedi/simd-audio-kernel"
+	mixer "github.com/krish-bedi/simd-audio-kernel/mixer"
 )
 
 // Float32 can accurately represent 6 significant digits
