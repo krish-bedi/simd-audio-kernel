@@ -8,8 +8,11 @@ import (
 	mixer "github.com/krish-bedi/simd-audio-kernel/mixer"
 )
 
-// Float32 can accurately represent 6 significant digits
-// tolerance: 1e-6 for samples in range of [-1 to 1]
+// Mixer function interface
+type Mixer func(dst, a, b []float32, gainA, gainB float32)
+
+// Float32 is guaranteed to accurately represent 6 significant digits
+// tolerance: 1e-6 for samples in range of -1 to 1
 
 // Returns true if a-b is within tolerance
 func withinTolerance(a, b float32) bool {
@@ -17,6 +20,7 @@ func withinTolerance(a, b float32) bool {
 	return math.Abs(float64(a-b)) <= tolerance
 }
 
+// Scalar Mixer test
 func TestMixScalar(t *testing.T) {
 	a := []float32{0.2, 0.8, -0.8, 1.0}
 	b := []float32{0.4, 0.8, -0.8, -1.0}
@@ -46,13 +50,13 @@ func TestMixScalarUsesShortestSlice(t *testing.T) {
 	}
 }
 
-// SIMD Mixer implementation tests
+// SIMD Mixer test
 
 func TestMixSIMDMatchesScalar(t *testing.T) {
 	lanes := mixer.Lanes()
-	lenghts := []int{0, 1, lanes - 1, lanes, lanes + 1, 2*lanes + 5}
+	lengths := []int{0, 1, lanes - 1, lanes, lanes + 1, 2*lanes + 5}
 
-	for _, n := range lenghts {
+	for _, n := range lengths {
 		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
 			a := make([]float32, n)
 			b := make([]float32, n)
@@ -108,8 +112,6 @@ func fuzzMixImpl(f *testing.F, mix Mixer) {
 }
 
 // Benchmark
-
-type Mixer func(dst, a, b []float32, gainA, gainB float32)
 
 // Benchmark Scalar and SIMD Mixer implementations together and save result to file
 // go test -run='^$' -bench='BenchmarkMix' -benchmem -count=10 ./... | tee bench.txt
