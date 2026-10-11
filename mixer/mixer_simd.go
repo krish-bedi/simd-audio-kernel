@@ -4,6 +4,11 @@ import (
 	"simd"
 )
 
+// Lanes returns the vector width selected by Go
+func Lanes() int {
+	return simd.BroadcastFloat32s(0).Len()
+}
+
 func MixSIMD(dst, a, b []float32, gainA, gainB float32) {
 	sampleCount := findSmallestSlice(dst, a, b)
 	
@@ -16,7 +21,7 @@ func MixSIMD(dst, a, b []float32, gainA, gainB float32) {
 
 	// Len() returns the # of lanes (length of vector)
 	// decided by Go based on target hardware
-	lanes := vaGain.Len()
+	lanes := Lanes()
 
 	// Loop over the input tracks in counts of lanes
 	// For ex: sampleCount = 10; lanes = 4
