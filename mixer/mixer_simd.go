@@ -12,8 +12,8 @@ func Lanes() int {
 func MixSIMD(dst, a, b []float32, gainA, gainB float32) {
 	sampleCount := findSmallestSlice(dst, a, b)
 	
-	// Insert both gain and clamp values into each lane as they are
-	// .. required for each operation
+	// Insert both gain and clamp values into each lane
+	// required for each operation
 	vaGain := simd.BroadcastFloat32s(gainA)
 	vbGain := simd.BroadcastFloat32s(gainB)
 	lower := simd.BroadcastFloat32s(-1)
